@@ -1,0 +1,82 @@
+.passage-container {
+  box-sizing: border-box;
+  margin-right: auto;
+  margin-left: auto;
+  max-width: 800px;
+}
+
+.passage-container h1 {
+  font-size: 96px;
+  font-weight: bold;
+  line-height: 1;
+  margin-top: 0rem;
+  margin-bottom: 1.5rem;
+}
+
+.passage-container h2 {
+  font-size: 64px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 1rem;
+  margin-top: 0rem;
+}
+
+.passage-container h3 {
+  font-size: 48px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+}
+
+.passage-container h4 {
+  font-size: 36px;
+  font-weight: bold;
+  line-height: 1.1;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+}
+
+.passage-container h5 {
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+}
+
+.passage-container h6 {
+  font-size: 22px;
+  font-weight: normal;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+}
+
+.passage-container {
+  font-size: 24px;
+  font-family: Calibri, sans-serif;
+}
+
+.passage-container p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.passage-container .by-line {
+  font-size: 28px;
+  font-weight: normal;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+}
+
+.passage-container .small-heading {
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+}
+
