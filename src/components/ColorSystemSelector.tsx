@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/select"
 import { type Theme } from "@/lib/utils"
 
-export type ColorSystem = "radix" | "tailwind700" | "tailwind800"
+export type ColorSystem = "radix11_3" | "radix11_4" | "tailwind700" | "tailwind800"
 
 interface ColorSystemSelectorProps {
   value: ColorSystem
@@ -46,12 +46,20 @@ export function ColorSystemSelector({ value, onValueChange, theme }: ColorSystem
           }}
         >
           <SelectItem 
-            value="radix"
+            value="radix11_3"
             style={{
               color: theme === "dark" ? "#E4E4E7" : undefined
             }}
           >
-            Radix
+            Radix 11/3
+          </SelectItem>
+          <SelectItem 
+            value="radix11_4"
+            style={{
+              color: theme === "dark" ? "#E4E4E7" : undefined
+            }}
+          >
+            Radix 11/4
           </SelectItem>
           <SelectItem 
             value="tailwind700"

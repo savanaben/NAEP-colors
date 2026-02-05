@@ -51,7 +51,7 @@ export function QualitySelector({ value, onValueChange, theme }: QualitySelector
               color: theme === "dark" ? "#E4E4E7" : undefined
             }}
           >
-            Normal
+            Off
           </SelectItem>
           <SelectItem 
             value="low"
@@ -74,4 +74,5 @@ export function QualitySelector({ value, onValueChange, theme }: QualitySelector
     </div>
   )
 }
+
 

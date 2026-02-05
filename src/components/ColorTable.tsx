@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { getAllRadixLevel11Colors } from "@/lib/radix-colors"
 import { getAllTailwind700Colors, getAllTailwind800Colors, getAllTailwind200Colors, getAllTailwind300Colors } from "@/lib/tailwind-colors"
 import { highlightColors, baseBackgrounds, type Theme } from "@/lib/utils"
@@ -10,6 +11,7 @@ interface ColorTableProps {
 }
 
 export function ColorTable({ theme, colorSystem }: ColorTableProps) {
+  const [copiedHex, setCopiedHex] = useState<string | null>(null)
   const radixColors = getAllRadixLevel11Colors()
   const tailwind700Colors = getAllTailwind700Colors()
   const tailwind800Colors = getAllTailwind800Colors()
@@ -20,8 +22,18 @@ export function ColorTable({ theme, colorSystem }: ColorTableProps) {
   const textColor = theme === "dark" ? "dark" : "light"
   const borderColor = theme === "dark" ? "#3f3f46" : undefined
 
+  const handleCopyHex = async (hex: string) => {
+    try {
+      await navigator.clipboard.writeText(hex)
+      setCopiedHex(hex)
+      setTimeout(() => setCopiedHex(null), 2000)
+    } catch (err) {
+      console.error("Failed to copy:", err)
+    }
+  }
+
   // Get colors based on selected system and theme
-  const colors = colorSystem === "radix"
+  const colors = (colorSystem === "radix11_3" || colorSystem === "radix11_4")
     ? radixColors.map(c => ({
         name: c.name,
         value: textColor === "dark" ? c.dark : c.light
@@ -35,7 +47,21 @@ export function ColorTable({ theme, colorSystem }: ColorTableProps) {
         : tailwind800Colors.map(c => ({ name: c.name, value: c.hex })))
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto relative">
+      {/* Toast notification */}
+      {copiedHex && (
+        <div
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-lg shadow-lg transition-all"
+          style={{
+            backgroundColor: theme === "dark" ? "#27272a" : "#ffffff",
+            borderColor: theme === "dark" ? "#3f3f46" : "#e4e4e7",
+            borderWidth: "1px",
+            color: theme === "dark" ? "#E4E4E7" : "#262626"
+          }}
+        >
+          <span className="text-sm font-medium">Copied {copiedHex} to clipboard</span>
+        </div>
+      )}
       <table className="w-full caption-bottom text-sm">
         <thead className="sticky top-0 z-20 [&_tr]:border-b">
           <tr 
@@ -95,7 +121,11 @@ export function ColorTable({ theme, colorSystem }: ColorTableProps) {
                     borderColor: borderColor
                   }}
                 >
-                  <div className="flex flex-col items-center gap-1">
+                  <div 
+                    className="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => handleCopyHex(textColorValue)}
+                    title="Click to copy hex code"
+                  >
                     <div
                       className="w-8 h-8 rounded border"
                       style={{ 
@@ -107,7 +137,7 @@ export function ColorTable({ theme, colorSystem }: ColorTableProps) {
                       className="text-xs font-medium text-center"
                       style={{ color: theme === "dark" ? "#E4E4E7" : undefined }}
                     >
-                      {color.name}
+                      {color.name} ({textColorValue.toUpperCase()})
                     </span>
                   </div>
                 </td>

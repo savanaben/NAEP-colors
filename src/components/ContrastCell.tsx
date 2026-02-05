@@ -8,6 +8,7 @@ interface ContrastCellProps {
   theme: Theme
   highlightHex?: string
   highlightOpacity?: number
+  cellBackgroundOverride?: string
 }
 
 export function ContrastCell({
@@ -16,14 +17,15 @@ export function ContrastCell({
   theme,
   highlightHex,
   highlightOpacity,
+  cellBackgroundOverride,
 }: ContrastCellProps) {
-  // Cell background is always the theme's base background
-  const cellBackground = baseBackgrounds[theme]
+  // Allow callers to override the cell background; default to the theme base background
+  const cellBackground = cellBackgroundOverride || baseBackgrounds[theme]
   
   // Text background is the highlight color (blended if opacity is specified)
   const textBackground =
     highlightHex && highlightOpacity !== undefined && highlightOpacity < 1
-      ? blendColor(highlightHex, baseBackgrounds[theme], highlightOpacity)
+      ? blendColor(highlightHex, cellBackground, highlightOpacity)
       : highlightHex || backgroundColor
 
   // Calculate contrast between text color and the highlight background
