@@ -1,16 +1,18 @@
 import { useState } from "react"
 import { getAllRadixLevel11Colors } from "@/lib/radix-colors"
 import { getAllTailwind700Colors, getAllTailwind800Colors, getAllTailwind200Colors, getAllTailwind300Colors } from "@/lib/tailwind-colors"
-import { highlightColors, baseBackgrounds, type Theme } from "@/lib/utils"
+import { highlightColors, baseBackgrounds, lbbHighlightSolid, type Theme } from "@/lib/utils"
+import { applyRadixLightOverride } from "@/lib/radix-light-overrides"
 import { type ColorSystem } from "@/components/ColorSystemSelector"
 import { ContrastCell } from "./ContrastCell"
 
 interface ColorTableProps {
   theme: Theme
   colorSystem: ColorSystem
+  radixLightOverrides: boolean
 }
 
-export function ColorTable({ theme, colorSystem }: ColorTableProps) {
+export function ColorTable({ theme, colorSystem, radixLightOverrides }: ColorTableProps) {
   const [copiedHex, setCopiedHex] = useState<string | null>(null)
   const radixColors = getAllRadixLevel11Colors()
   const tailwind700Colors = getAllTailwind700Colors()
@@ -34,10 +36,11 @@ export function ColorTable({ theme, colorSystem }: ColorTableProps) {
 
   // Get colors based on selected system and theme
   const colors = (colorSystem === "radix11_3" || colorSystem === "radix11_4")
-    ? radixColors.map(c => ({
-        name: c.name,
-        value: textColor === "dark" ? c.dark : c.light
-      }))
+    ? radixColors.map(c => {
+        const raw = textColor === "dark" ? c.dark : c.light
+        const value = applyRadixLightOverride(raw, theme, colorSystem, radixLightOverrides)
+        return { name: c.name, value }
+      })
     : colorSystem === "tailwind700"
     ? (theme === "dark" 
         ? tailwind300Colors.map(c => ({ name: c.name, value: c.hex }))
@@ -90,18 +93,32 @@ export function ColorTable({ theme, colorSystem }: ColorTableProps) {
             >
               Base Background
             </th>
-            {highlights.map((highlight: { name: string; hex: string; opacity?: number }) => (
-              <th 
-                key={highlight.name} 
+            {highlights.flatMap((highlight: { name: string; hex: string; opacity?: number }) => [
+              <th
+                key={highlight.name}
                 className="h-8 px-1 text-left align-middle font-medium min-w-[100px] border-l"
-                style={{ 
+                style={{
                   color: theme === "dark" ? "#E4E4E7" : undefined,
                   borderColor: borderColor
                 }}
               >
                 {highlight.name}
-              </th>
-            ))}
+              </th>,
+              ...(highlight.name === "LBB Highlight"
+                ? [
+                    <th
+                      key="LBB Highlight (Solid)"
+                      className="h-8 px-1 text-left align-middle font-medium min-w-[100px] border-l"
+                      style={{
+                        color: theme === "dark" ? "#E4E4E7" : undefined,
+                        borderColor: borderColor
+                      }}
+                    >
+                      LBB Highlight (Solid)
+                    </th>
+                  ]
+                : [])
+            ])}
           </tr>
         </thead>
         <tbody className="[&_tr:last-child]:border-0">
@@ -148,7 +165,7 @@ export function ColorTable({ theme, colorSystem }: ColorTableProps) {
                     theme={theme}
                   />
                 </td>
-                {highlights.map((highlight: { name: string; hex: string; opacity?: number }) => (
+                {highlights.flatMap((highlight: { name: string; hex: string; opacity?: number }) => [
                   <td key={highlight.name} className="p-0 align-middle">
                     <ContrastCell
                       textColor={textColorValue}
@@ -156,9 +173,22 @@ export function ColorTable({ theme, colorSystem }: ColorTableProps) {
                       theme={theme}
                       highlightHex={highlight.hex}
                       highlightOpacity={highlight.opacity}
+                      highlightName={highlight.name}
                     />
-                  </td>
-                ))}
+                  </td>,
+                  ...(highlight.name === "LBB Highlight"
+                    ? [
+                        <td key="LBB Highlight (Solid)" className="p-0 align-middle">
+                          <ContrastCell
+                            textColor={textColorValue}
+                            backgroundColor={baseBg}
+                            theme={theme}
+                            highlightHex={lbbHighlightSolid[theme]}
+                          />
+                        </td>
+                      ]
+                    : [])
+                ])}
               </tr>
             )
           })}

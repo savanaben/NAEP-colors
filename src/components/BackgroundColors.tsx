@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react"
-import { type Theme, baseBackgrounds, highlightColors, reduceSaturation as reduceSaturationFn } from "@/lib/utils"
+import { useMemo, useState } from "react"
+import { type Theme, baseBackgrounds, highlightColors, lbbHighlightSolid, reduceSaturation as reduceSaturationFn } from "@/lib/utils"
+import { applyRadixLightOverride } from "@/lib/radix-light-overrides"
 import { getAllRadixLevel11Colors, getAllRadixLevelColors } from "@/lib/radix-colors"
 import { ContrastCell } from "./ContrastCell"
 import { type ColorSystem } from "./ColorSystemSelector"
@@ -8,9 +9,10 @@ interface BackgroundColorsProps {
   theme: Theme
   colorSystem: ColorSystem
   reduceSaturation: boolean
+  radixLightOverrides: boolean
 }
 
-export function BackgroundColors({ theme, colorSystem, reduceSaturation }: BackgroundColorsProps) {
+export function BackgroundColors({ theme, colorSystem, reduceSaturation, radixLightOverrides }: BackgroundColorsProps) {
   const baseBg = baseBackgrounds[theme]
   const borderColor = theme === "dark" ? "#3f3f46" : undefined
   const highlights = highlightColors[theme]
@@ -24,23 +26,31 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation }: Backg
     []
   )
 
+  // Primary default text swatch: black (light/beige) or white (dark), first in the list
+  const defaultTextSwatch = useMemo(() => ({
+    name: theme === "dark" ? "White" : "Black",
+    value: theme === "dark" ? "#EBEBEB" : "#262626"
+  }), [theme])
+
   const swatchColors = useMemo(() => {
-    if (theme === "dark") {
-      return radix5LightColors
-    }
-    return radix11Colors.map(c => ({ name: c.name, value: c.light }))
-  }, [theme, radix11Colors, radix5LightColors])
+    const palette = theme === "dark"
+      ? radix5LightColors
+      : radix11Colors.map(c => {
+          const raw = c.light
+          const value = applyRadixLightOverride(raw, theme, colorSystem, radixLightOverrides)
+          return { name: c.name, value }
+        })
+    return [defaultTextSwatch, ...palette]
+  }, [theme, colorSystem, radixLightOverrides, defaultTextSwatch, radix11Colors, radix5LightColors])
 
   const defaultTextColor = useMemo(() => {
     const gray = swatchColors.find(c => c.name === "Gray")
     return gray ? gray.value : swatchColors[0]?.value || (theme === "dark" ? "#E4E4E7" : "#262626")
   }, [swatchColors, theme])
 
-  const [selectedTextColor, setSelectedTextColor] = useState<string>(defaultTextColor)
-
-  useEffect(() => {
-    setSelectedTextColor(defaultTextColor)
-  }, [defaultTextColor])
+  // Store selection by name so toggling Radix Light Overrides keeps the same color selected (hex updates)
+  const [selectedTextColorName, setSelectedTextColorName] = useState<string>("Gray")
+  const selectedTextColor = swatchColors.find(c => c.name === selectedTextColorName)?.value ?? defaultTextColor
 
   // Background colors use Radix level 3 for light/beige, level 4 for dark theme
   // Dark theme (level 4) is never adjusted by the toggle
@@ -67,6 +77,13 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation }: Backg
 
   // Guard: this tab is Radix-only; inform if another system is selected
   const isRadix = colorSystem === "radix11_3" || colorSystem === "radix11_4"
+
+  // Neutral/default row at top: theme-specific background (shown for all color systems)
+  const defaultRowBg = useMemo(() => {
+    if (theme === "dark") return { value: "#000000", displayHex: "#000000" }
+    if (theme === "beige") return { value: "rgb(246, 246, 230)", displayHex: "#F6F6E6" }
+    return { value: "#FFFFFF", displayHex: "#FFFFFF" }
+  }, [theme])
 
   const handleCopyHex = async (hex: string) => {
     try {
@@ -117,12 +134,12 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation }: Backg
         <div className="flex flex-wrap gap-2 justify-center max-w-[900px] mx-auto">
           {swatchColors.map((color) => {
             const colorValue = color.value
-            const isSelected = selectedTextColor === colorValue
+            const isSelected = color.name === selectedTextColorName
 
             return (
               <button
                 key={color.name}
-                onClick={() => setSelectedTextColor(colorValue)}
+                onClick={() => setSelectedTextColorName(color.name)}
                 className="rounded border-2 transition-all hover:scale-105"
                 style={{
                   width: "40px",
@@ -173,7 +190,7 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation }: Backg
               >
                 Base Background
               </th>
-              {highlights.map((highlight) => (
+              {highlights.flatMap((highlight) => [
                 <th
                   key={highlight.name}
                   className="h-8 px-1 text-left align-middle font-medium min-w-[140px] border-l"
@@ -183,11 +200,92 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation }: Backg
                   }}
                 >
                   {highlight.name}
-                </th>
-              ))}
+                </th>,
+                ...(highlight.name === "LBB Highlight"
+                  ? [
+                      <th
+                        key="LBB Highlight (Solid)"
+                        className="h-8 px-1 text-left align-middle font-medium min-w-[140px] border-l"
+                        style={{
+                          color: theme === "dark" ? "#E4E4E7" : undefined,
+                          borderColor: borderColor
+                        }}
+                      >
+                        LBB Highlight (Solid)
+                      </th>
+                    ]
+                  : [])
+              ])}
             </tr>
           </thead>
           <tbody className="[&_tr:last-child]:border-0">
+            {/* Neutral row: White (light), rgb(246,246,230) (beige), black (dark) */}
+            <tr
+              className="transition-colors hover:bg-muted/50"
+              style={{ borderColor: borderColor }}
+            >
+              <td
+                className="sticky left-0 z-10 border-r border-b p-1 align-middle"
+                style={{
+                  backgroundColor: baseBg,
+                  borderColor: borderColor
+                }}
+              >
+                <div
+                  className="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => handleCopyHex(defaultRowBg.value)}
+                  title="Click to copy hex code"
+                >
+                  <div
+                    className="w-10 h-10 rounded border"
+                    style={{
+                      backgroundColor: defaultRowBg.value,
+                      borderColor: borderColor
+                    }}
+                  />
+                  <span
+                    className="text-xs font-medium text-center"
+                    style={{ color: theme === "dark" ? "#E4E4E7" : undefined }}
+                  >
+                    Default ({defaultRowBg.displayHex})
+                  </span>
+                </div>
+              </td>
+              <td className="p-0 align-middle">
+                <ContrastCell
+                  textColor={selectedTextColor}
+                  backgroundColor={defaultRowBg.value}
+                  theme={theme}
+                  cellBackgroundOverride={defaultRowBg.value}
+                />
+              </td>
+              {highlights.flatMap((highlight) => [
+                <td key={highlight.name} className="p-0 align-middle">
+                  <ContrastCell
+                    textColor={selectedTextColor}
+                    backgroundColor={defaultRowBg.value}
+                    theme={theme}
+                    highlightHex={highlight.hex}
+                    highlightOpacity={highlight.opacity}
+                    cellBackgroundOverride={defaultRowBg.value}
+                    highlightName={highlight.name}
+                  />
+                </td>,
+                ...(highlight.name === "LBB Highlight"
+                  ? [
+                      <td key="LBB Highlight (Solid)" className="p-0 align-middle">
+                        <ContrastCell
+                          textColor={selectedTextColor}
+                          backgroundColor={defaultRowBg.value}
+                          theme={theme}
+                          highlightHex={lbbHighlightSolid[theme]}
+                          cellBackgroundOverride={defaultRowBg.value}
+                        />
+                      </td>
+                    ]
+                  : [])
+              ])}
+            </tr>
             {backgroundColors.map((color) => {
               const bgValue = color.value
 
@@ -232,7 +330,7 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation }: Backg
                       cellBackgroundOverride={bgValue}
                     />
                   </td>
-                  {highlights.map((highlight) => (
+                  {highlights.flatMap((highlight) => [
                     <td key={highlight.name} className="p-0 align-middle">
                       <ContrastCell
                         textColor={selectedTextColor}
@@ -241,9 +339,23 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation }: Backg
                         highlightHex={highlight.hex}
                         highlightOpacity={highlight.opacity}
                         cellBackgroundOverride={bgValue}
+                        highlightName={highlight.name}
                       />
-                    </td>
-                  ))}
+                    </td>,
+                    ...(highlight.name === "LBB Highlight"
+                      ? [
+                          <td key="LBB Highlight (Solid)" className="p-0 align-middle">
+                            <ContrastCell
+                              textColor={selectedTextColor}
+                              backgroundColor={bgValue}
+                              theme={theme}
+                              highlightHex={lbbHighlightSolid[theme]}
+                              cellBackgroundOverride={bgValue}
+                            />
+                          </td>
+                        ]
+                      : [])
+                  ])}
                 </tr>
               )
             })}

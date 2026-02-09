@@ -4,14 +4,16 @@ import { ThemeSelector } from "@/components/ThemeSelector"
 import { ColorSystemSelector, type ColorSystem } from "@/components/ColorSystemSelector"
 import { QualitySelector, type Quality } from "@/components/QualitySelector"
 import { SaturationToggle } from "@/components/SaturationToggle"
+import { RadixLightOverrideToggle } from "@/components/RadixLightOverrideToggle"
 import { ColorTable } from "@/components/ColorTable"
 import { PassageDemo } from "@/components/PassageDemo"
 import { AccentColors } from "@/components/AccentColors"
 import { BackgroundColors } from "@/components/BackgroundColors"
+import { FinalColors } from "@/components/FinalColors"
 import { type Theme, baseBackgrounds } from "@/lib/utils"
 import "./index.css"
 
-type Tab = "table" | "background" | "passage" | "accent"
+type Tab = "final" | "table" | "background" | "passage" | "accent"
 
 function App() {
   const [theme, setTheme] = useState<Theme>(() => {
@@ -21,7 +23,7 @@ function App() {
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const saved = localStorage.getItem("activeTab") as Tab
-    const validTabs: Tab[] = ["table", "background", "accent", "passage"]
+    const validTabs: Tab[] = ["final", "table", "background", "accent", "passage"]
     return validTabs.includes(saved) ? saved : "table"
   })
 
@@ -51,6 +53,12 @@ function App() {
     return saved === "true"
   })
 
+  const [radixLightOverrides, setRadixLightOverrides] = useState<boolean>(() => {
+    const saved = localStorage.getItem("radixLightOverrides")
+    if (saved === null) return true // Default on (override enabled) on page load
+    return saved === "true"
+  })
+
   const [notesOpen, setNotesOpen] = useState(false)
   const notesRef = useRef<HTMLDivElement>(null)
 
@@ -73,6 +81,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("reduceSaturation", reduceSaturation.toString())
   }, [reduceSaturation])
+
+  useEffect(() => {
+    localStorage.setItem("radixLightOverrides", radixLightOverrides.toString())
+  }, [radixLightOverrides])
 
   // Close notes popover when clicking outside
   useEffect(() => {
@@ -105,7 +117,7 @@ function App() {
   }, [quality])
 
   const handleClearStorage = () => {
-    if (confirm("Clear all saved preferences? This will reset theme, color system, quality, and tab selection.")) {
+    if (confirm("Clear all saved preferences? This will reset theme, color system, quality, tab selection, and toggles.")) {
       localStorage.clear()
       window.location.reload()
     }
@@ -172,17 +184,26 @@ function App() {
                   >
                     <h3 className="font-semibold mb-3 text-sm">Notes</h3>
                     <ul className="space-y-3 text-sm list-disc pl-5">
-                      <li className="leading-relaxed">
-                        Must confirm Radix colors will only be used for header text. most of them only pass 3:1 when highlighted. We do have an "out" in that even NAEPs body text (~22px font size) is large enough to be classified as large text (only need to meet 3:1).
+                    <li className="leading-relaxed">
+                        No SIP on any bg color to ensure border contrast maintained. 
                       </li>
                       <li className="leading-relaxed">
-                        Remove all the grays/decide on 1 gray and remove the rest. 
+                        Is it excessive to use radix 3 dark for sidebars and raddix 4 dark for bg colors. the rationale for this is a darker background color for containers becomes less perceptable (BUT for sidebars we want this less perceptable level because the color field is so large).
+                      </li>
+                      <li className="leading-relaxed">
+                        We accept LBB highlight can be somewhat impacted on a blue bg. LBB highlight is not contrast compliant to start... we had a whole project to address this but it was descoped. 
+                      </li>
+                       <li className="leading-relaxed">
+                        Change - LBB highlight moves from transparent to solid. this fixes contrast issues with dark theme off white body text on a colored background.
+                      </li>
+                      <li className="leading-relaxed">
+                        Remove all the grays/decide on 1 gray and remove the rest. an issue with gray is the dark theme - headers seem sort of too dark/gray compared to white body text. 
                       </li>
                       <li className="leading-relaxed">
                         Radix Yellow light/beige sidebar color might be too vibrant.
                       </li>
                       <li className="leading-relaxed">
-                        Orange header is lowest contrast. 
+                        How do we reconcile allowing all of these container colors. Current rule was background colors can only be used for asides/smaller chunks of text. 
                       </li>
                       <li className="leading-relaxed">
                         Light theme "Tomato", "Red", "Ruby" is very red - we alright with red header text?
@@ -218,11 +239,25 @@ function App() {
               <ThemeSelector value={theme} onValueChange={setTheme} theme={theme} />
               <QualitySelector value={quality} onValueChange={setQuality} theme={theme} />
               <SaturationToggle value={reduceSaturation} onValueChange={setReduceSaturation} theme={theme} />
+              <RadixLightOverrideToggle value={radixLightOverrides} onValueChange={setRadixLightOverrides} theme={theme} />
             </div>
           </div>
           
           {/* Tabs */}
           <div className="flex gap-2 border-b" style={{ borderColor: borderColor }}>
+            <button
+              onClick={() => setActiveTab("final")}
+              className="px-4 py-2 font-medium transition-colors"
+              style={{
+                color: activeTab === "final" 
+                  ? (theme === "dark" ? "#E4E4E7" : "#262626")
+                  : (theme === "dark" ? "#A1A1AA" : "#71717a"),
+                borderBottom: activeTab === "final" ? "2px solid" : "none",
+                borderColor: activeTab === "final" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
+              }}
+            >
+              Final Colors
+            </button>
             <button
               onClick={() => setActiveTab("table")}
               className="px-4 py-2 font-medium transition-colors"
@@ -280,6 +315,10 @@ function App() {
       </div>
 
       {/* Tab content */}
+      {activeTab === "final" && (
+        <FinalColors theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+      )}
+
       {activeTab === "table" && (
         <div className="p-4">
           <div 
@@ -288,19 +327,19 @@ function App() {
               borderColor: borderColor
             }}
           >
-            <ColorTable theme={theme} colorSystem={colorSystem} />
+            <ColorTable theme={theme} colorSystem={colorSystem} radixLightOverrides={radixLightOverrides} />
           </div>
         </div>
       )}
 
       {activeTab === "background" && (
         <div className="p-4">
-          <BackgroundColors theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} />
+          <BackgroundColors theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
         </div>
       )}
 
       {activeTab === "passage" && (
-        <PassageDemo theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} />
+        <PassageDemo theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
       )}
 
       {activeTab === "accent" && (

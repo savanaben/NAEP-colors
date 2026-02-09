@@ -9,6 +9,8 @@ interface ContrastCellProps {
   highlightHex?: string
   highlightOpacity?: number
   cellBackgroundOverride?: string
+  /** When "SIP Highlight" or "Purple Highlight", a border is applied around the highlight area */
+  highlightName?: string
 }
 
 export function ContrastCell({
@@ -18,6 +20,7 @@ export function ContrastCell({
   highlightHex,
   highlightOpacity,
   cellBackgroundOverride,
+  highlightName,
 }: ContrastCellProps) {
   // Allow callers to override the cell background; default to the theme base background
   const cellBackground = cellBackgroundOverride || baseBackgrounds[theme]
@@ -58,6 +61,29 @@ export function ContrastCell({
 
   const borderColor = theme === "dark" ? "#3f3f46" : undefined
 
+  // SIP Highlight: dashed border around the highlight (light/beige vs dark border color)
+  const isSipHighlight = highlightHex && highlightName === "SIP Highlight"
+  const sipBorderStyle = isSipHighlight
+    ? {
+        borderWidth: "1px",
+        borderStyle: "dashed" as const,
+        borderRadius: "calc(4px * var(--zoom, 1))",
+        borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.24)" : "rgba(0, 0, 0, 0.36)",
+      }
+    : undefined
+
+  // Purple Highlight: 1px solid border (light/beige #A12ECF, dark #DD90FF), no rounding
+  const isPurpleHighlight = highlightHex && highlightName === "Purple Highlight"
+  const purpleBorderStyle = isPurpleHighlight
+    ? {
+        borderWidth: "1px",
+        borderStyle: "solid" as const,
+        borderColor: theme === "dark" ? "#DD90FF" : "#A12ECF",
+      }
+    : undefined
+
+  const highlightBorderStyle = sipBorderStyle ?? purpleBorderStyle
+
   return (
     <div
       className="p-1 min-w-[142px] gap-1 flex flex-col border"
@@ -71,8 +97,9 @@ export function ContrastCell({
         style={{ 
           color: textColor,
           backgroundColor: textBackground,
-          lineHeight: "1.2",
-          fontSize: "22px"
+          lineHeight: "1.3",
+          fontSize: "22px",
+          ...highlightBorderStyle,
         }}
       >
         Sample Text

@@ -49,6 +49,13 @@ export const baseBackgrounds: Record<Theme, string> = {
   dark: "#000000",
 }
 
+/** Solid LBB highlight hex per theme (no transparency). Used for "LBB Highlight (Solid)" column. */
+export const lbbHighlightSolid: Record<Theme, string> = {
+  light: "#BEDEFF",
+  beige: "#BADAF3",
+  dark: "#3F5F80",
+}
+
 // Blend two colors with given opacity
 export function blendColor(foreground: string, background: string, opacity: number): string {
   const fg = hexToRgb(foreground)

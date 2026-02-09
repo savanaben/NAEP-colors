@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react"
 import { getAllRadixLevel11Colors, getAllRadixLevelColors } from "@/lib/radix-colors"
 import { getAllTailwind700Colors, getAllTailwind800Colors, getAllTailwind200Colors, getAllTailwind300Colors, getAllTailwind50Colors, getAllTailwind950Colors, getAllTailwind100Colors, getAllTailwind900Colors } from "@/lib/tailwind-colors"
 import { baseBackgrounds, type Theme, reduceSaturation as reduceSaturationFn } from "@/lib/utils"
+import { applyRadixLightOverride } from "@/lib/radix-light-overrides"
 import { type ColorSystem } from "@/components/ColorSystemSelector"
 import "./PassageDemo.css"
 
@@ -9,9 +10,10 @@ interface PassageDemoProps {
   theme: Theme
   colorSystem: ColorSystem
   reduceSaturation: boolean
+  radixLightOverrides: boolean
 }
 
-export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDemoProps) {
+export function PassageDemo({ theme, colorSystem, reduceSaturation, radixLightOverrides }: PassageDemoProps) {
   const radixColors = getAllRadixLevel11Colors()
   const radix5LightColors = useMemo(
     () => getAllRadixLevelColors(5).map(c => ({ name: c.name, light: c.light })),
@@ -31,10 +33,11 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
   // Get text colors based on selected system and theme
   const colors = useMemo(() => {
     return (colorSystem === "radix11_3" || colorSystem === "radix11_4")
-      ? radixColors.map(c => ({
-          name: c.name,
-          value: textColor === "dark" ? c.dark : c.light
-        }))
+      ? radixColors.map(c => {
+          const raw = textColor === "dark" ? c.dark : c.light
+          const value = applyRadixLightOverride(raw, theme, colorSystem, radixLightOverrides)
+          return { name: c.name, value }
+        })
       : colorSystem === "tailwind700"
       ? (theme === "dark"
           ? tailwind300Colors.map(c => ({ name: c.name, value: c.hex }))
@@ -42,55 +45,41 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
       : (theme === "dark"
           ? tailwind200Colors.map(c => ({ name: c.name, value: c.hex }))
           : tailwind800Colors.map(c => ({ name: c.name, value: c.hex })))
-  }, [colorSystem, theme, textColor])
+  }, [colorSystem, theme, textColor, radixLightOverrides])
 
-  // Initialize selectedColor from localStorage, keyed by colorSystem only (not theme)
-  const [selectedColor, setSelectedColor] = useState<string | null>(() => {
+  // Store selection by name so toggling Radix Light Overrides keeps the same color selected (hex updates)
+  const [selectedColorName, setSelectedColorName] = useState<string | null>(() => {
     const storageKey = `passageSelectedColor_${colorSystem}`
-    const savedColorName = localStorage.getItem(storageKey)
-    if (savedColorName) {
-      // Find the color by name in the current color list
-      const colorObj = colors.find(c => c.name === savedColorName)
-      return colorObj ? colorObj.value : null
-    }
-    return null
+    return localStorage.getItem(storageKey)
   })
 
-  // Sync selectedColor when colorSystem or theme changes (find by name, not hex)
+  // Sync selectedColorName when colorSystem or theme changes (re-read localStorage for new system)
   useEffect(() => {
     const storageKey = `passageSelectedColor_${colorSystem}`
     const savedColorName = localStorage.getItem(storageKey)
-    
-    if (savedColorName) {
-      // Find the color by name in the current color list
-      const colorObj = colors.find(c => c.name === savedColorName)
-      if (colorObj) {
-        setSelectedColor(colorObj.value)
-      } else {
-        // Color no longer exists, clear it
-        setSelectedColor(null)
-        localStorage.removeItem(storageKey)
-      }
-    } else {
-      // No saved color for this color system - clear selection
-      setSelectedColor(null)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorSystem, theme]) // Sync when colorSystem or theme changes
+    setSelectedColorName(savedColorName || null)
+  }, [colorSystem, theme])
 
-  // Save selectedColor name to localStorage when it changes
+  // Save selectedColorName to localStorage when it changes
   useEffect(() => {
     const storageKey = `passageSelectedColor_${colorSystem}`
-    if (selectedColor) {
-      // Find the color object to get the name
-      const colorObj = colors.find(c => c.value === selectedColor)
-      if (colorObj) {
-        localStorage.setItem(storageKey, colorObj.name)
-      }
+    if (selectedColorName) {
+      localStorage.setItem(storageKey, selectedColorName)
     } else {
       localStorage.removeItem(storageKey)
     }
-  }, [selectedColor, colorSystem, colors])
+  }, [selectedColorName, colorSystem])
+
+  // Primary default text swatch (black in light/beige, white in dark), first in the list
+  const defaultTextSwatch = useMemo(() => ({
+    name: theme === "dark" ? "White" : "Black",
+    value: theme === "dark" ? "#EBEBEB" : "#262626"
+  }), [theme])
+
+  const swatchListWithDefault = useMemo(
+    () => [defaultTextSwatch, ...colors],
+    [defaultTextSwatch, colors]
+  )
 
   // Determine available levels and default level based on color system and theme
   const { availableLevels, defaultLevelIndex } = useMemo(() => {
@@ -192,13 +181,15 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
     return color.value
   }
 
-  const selectedColorObj = selectedColor 
-    ? colors.find(c => getColorValue(c) === selectedColor)
+  const selectedColorObj = selectedColorName
+    ? (selectedColorName === "Black" || selectedColorName === "White"
+        ? { name: selectedColorName, value: theme === "dark" ? "#EBEBEB" : "#262626" }
+        : colors.find(c => c.name === selectedColorName))
     : null
 
   const passageTextColor = selectedColorObj 
     ? getColorValue(selectedColorObj)
-    : (textColor === "dark" ? "#E4E4E7" : "#262626")
+    : (textColor === "dark" ? "#EBEBEB" : "#262626")
 
   // Get the corresponding background color for the selected text color
   const pageBgColor = useMemo(() => {
@@ -232,18 +223,19 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
         return match.light
       }
     }
-    return "#E4E4E7"
+    return "#EBEBEB"
   }, [selectedColorObj, radix5LightColors])
 
   const lightHeadingColor = useMemo(() => {
     if (selectedColorObj && radixColors) {
       const match = radixColors.find(c => c.name === selectedColorObj.name)
       if (match) {
-        return match.light
+        const raw = match.light
+        return applyRadixLightOverride(raw, theme, colorSystem, radixLightOverrides)
       }
     }
     return "#262626"
-  }, [selectedColorObj, radixColors])
+  }, [selectedColorObj, radixColors, theme, colorSystem, radixLightOverrides])
 
   return (
     <div style={{ backgroundColor: pageBgColor, minHeight: "100vh" }}>
@@ -260,7 +252,7 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
         {/* <div className="flex items-center gap-3 justify-center mb-4 max-w-[150px] mx-auto">
           <label 
             className="text-sm font-medium whitespace-nowrap"
-            style={{ color: theme === "dark" ? "#E4E4E7" : "#262626" }}
+            style={{ color: theme === "dark" ? "#EBEBEB" : "#262626" }}
           >
             Passage Background:
           </label>
@@ -273,7 +265,7 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
               onChange={(e) => setSelectedLevelIndex(Number(e.target.value))}
               className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               style={{
-                accentColor: theme === "dark" ? "#E4E4E7" : "#262626"
+                accentColor: theme === "dark" ? "#EBEBEB" : "#262626"
               }}
             />
             <span 
@@ -285,21 +277,21 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
           </div>
         </div> */}
         <div className="flex flex-wrap gap-2 justify-center max-w-[750px] mx-auto">
-          {colors.map((color) => {
-            const colorValue = getColorValue(color)
-            const isSelected = selectedColor === colorValue
+          {swatchListWithDefault.map((color) => {
+            const colorValue = color.value
+            const isSelected = color.name === selectedColorName
             
             return (
               <button
                 key={color.name}
-                onClick={() => setSelectedColor(isSelected ? null : colorValue)}
+                onClick={() => setSelectedColorName(isSelected ? null : color.name)}
                 className="rounded border-2 transition-all hover:scale-110"
                 style={{
                   width: "40px",
                   height: "40px",
                   backgroundColor: colorValue,
                   borderColor: isSelected 
-                    ? (theme === "dark" ? "#E4E4E7" : "#262626")
+                    ? (theme === "dark" ? "#EBEBEB" : "#262626")
                     : (theme === "dark" ? "#3f3f46" : undefined),
                   borderWidth: isSelected ? "3px" : "1px"
                 }}
@@ -323,7 +315,7 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
           By Design Team • March 2024
         </div>
 
-        <p style={{ color: theme === "dark" ? "#E4E4E7" : "#262626" }}>
+        <p style={{ color: theme === "dark" ? "#EBEBEB" : "#262626" }}>
           Color contrast plays a crucial role in ensuring that digital content is accessible to all users. 
           The Web Content Accessibility Guidelines (WCAG) provide specific contrast ratio requirements that 
           help designers create readable and inclusive interfaces. These guidelines ensure that text is 
@@ -335,7 +327,7 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
           className="mt-6 p-4 rounded-xl border"
           style={{
             backgroundColor: lightDemoBg,
-            borderColor: theme === "dark" ? "#3f3f46" : "#e4e4e7"
+            borderColor: theme === "dark" ? "#3f3f46" : "#EBEBEB"
           }}
         >
           <h4 style={{ color: lightHeadingColor, marginBottom: "8px", marginTop: 0 }}>
@@ -352,13 +344,13 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
           className="mt-4 p-4 rounded-xl border"
           style={{
             backgroundColor: darkDemoBg,
-            borderColor: theme === "dark" ? "#3f3f46" : "#e4e4e7"
+            borderColor: theme === "dark" ? "#3f3f46" : "#EBEBEB"
           }}
         >
           <h4 style={{ color: darkHeadingColor, marginBottom: "8px", marginTop: 0 }}>
             Dark Colored Container
           </h4>
-          <p style={{ color: "#E4E4E7", margin: 0 }}>
+          <p style={{ color: "#EBEBEB", margin: 0 }}>
             This block shows the dark Radix accent background (level {selectedLevel}) inside the light/beige page.
             Heading keeps the accent text color; body uses light text for contrast.
           </p>
@@ -368,13 +360,13 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation }: PassageDem
           Best Practices for Implementation
         </h4>
 
-        <p style={{ color: theme === "dark" ? "#E4E4E7" : "#262626" }}>
+        <p style={{ color: theme === "dark" ? "#EBEBEB" : "#262626" }}>
           Testing color combinations early in the design process helps prevent accessibility issues. 
           Use automated tools and manual testing to verify that all text meets WCAG standards. 
           Remember that contrast requirements apply not only to body text but also to headings, 
           links, and interactive elements.
         </p>
-        <p style={{ color: theme === "dark" ? "#E4E4E7" : "#262626" }}>
+        <p style={{ color: theme === "dark" ? "#EBEBEB" : "#262626" }}>
           Testing color combinations early in the design process helps prevent accessibility issues. 
           Use automated tools and manual testing to verify that all text meets WCAG standards. 
           Remember that contrast requirements apply.
