@@ -1,7 +1,6 @@
 import { useMemo } from "react"
-import { getAllRadixLevel11Colors, getAllRadixLevelColors } from "@/lib/radix-colors"
-import { applyRadixLightOverride } from "@/lib/radix-light-overrides"
-import { reduceSaturation as reduceSaturationFn, getGrayscaleLightness } from "@/lib/utils"
+import { getFinalColorRows } from "@/lib/final-colors-data"
+import { getGrayscaleLightness } from "@/lib/utils"
 import { type Theme } from "@/lib/utils"
 import { type ColorSystem } from "@/components/ColorSystemSelector"
 
@@ -28,56 +27,11 @@ export function FinalColors({
   radixLightOverrides,
 }: FinalColorsProps) {
   const isRadix = colorSystem === "radix11_3" || colorSystem === "radix11_4"
-  const accentLevel = colorSystem === "radix11_4" ? 4 : 3
 
-  const rows = useMemo(() => {
-    if (!isRadix) return []
-
-    const radix11 = getAllRadixLevel11Colors()
-    const radixBgLight = getAllRadixLevelColors(3) // background light/beige
-    const radixBgDark = getAllRadixLevelColors(4)  // background dark
-    const radixAccent = getAllRadixLevelColors(accentLevel)
-
-    const minLightnessLight = 92
-    const minLightnessDark = 11.5
-    const skipSaturationDark = true
-
-    return radix11.map((c) => {
-      const name = c.name
-
-      // Text: 11 light (with override) / 11 dark
-      const textLight = applyRadixLightOverride(c.light, "light", colorSystem, radixLightOverrides)
-      const textDark = c.dark
-
-      // Background: level 3 light (optional reduceSaturation) / level 4 dark
-      const bgLightRaw = radixBgLight.find((x) => x.name === name)?.light ?? c.light
-      const bgDarkRaw = radixBgDark.find((x) => x.name === name)?.dark ?? c.dark
-      const bgLight = reduceSaturation
-        ? reduceSaturationFn(bgLightRaw, 12, minLightnessLight, name, false)
-        : bgLightRaw
-      const bgDark = bgDarkRaw
-
-      // Accent: level 3 or 4 light/dark (optional reduceSaturation)
-      const accLightRaw = radixAccent.find((x) => x.name === name)?.light ?? c.light
-      const accDarkRaw = radixAccent.find((x) => x.name === name)?.dark ?? c.dark
-      const accLight = reduceSaturation
-        ? reduceSaturationFn(accLightRaw, 12, minLightnessLight, name, false)
-        : accLightRaw
-      const accDark = reduceSaturation
-        ? reduceSaturationFn(accDarkRaw, 12, minLightnessDark, name, skipSaturationDark)
-        : accDarkRaw
-
-      return {
-        name,
-        textLight,
-        textDark,
-        bgLight,
-        bgDark,
-        accLight,
-        accDark,
-      }
-    })
-  }, [isRadix, colorSystem, radixLightOverrides, reduceSaturation, accentLevel])
+  const rows = useMemo(
+    () => getFinalColorRows(colorSystem, reduceSaturation, radixLightOverrides),
+    [colorSystem, reduceSaturation, radixLightOverrides]
+  )
 
   const borderColor = theme === "dark" ? BORDER_DARK : BORDER
   const headerFg = theme === "dark" ? "#E4E4E7" : "#262626"
@@ -190,40 +144,48 @@ export function FinalColors({
                     {row.name}
                   </td>
                   <td
-                    className="px-2 py-2 border-r text-center font-mono font-bold text-[10px]"
-                    style={{ borderColor, backgroundColor: LIGHT_BG, color: row.textLight }}
+                    className="px-2 py-2 border-r text-center font-mono font-bold text-sm"
+                    style={{
+                      borderColor,
+                      backgroundColor: LIGHT_BG,
+                      color: row.textLight === "None" ? subHeaderFg : row.textLight,
+                    }}
                   >
                     {row.textLight.toUpperCase()}
                   </td>
                   <td
-                    className="px-2 py-2 border-r text-center font-mono font-bold text-[10px]"
-                    style={{ borderColor, backgroundColor: DARK_BG, color: row.textDark }}
+                    className="px-2 py-2 border-r text-center font-mono font-bold text-sm"
+                    style={{
+                      borderColor,
+                      backgroundColor: DARK_BG,
+                      color: row.textDark === "None" ? "#a1a1aa" : row.textDark,
+                    }}
                   >
                     {row.textDark.toUpperCase()}
                   </td>
                   <td
-                    className="px-2 py-2 border-r text-center text-[10px] font-mono"
+                    className="px-2 py-2 border-r text-center text-sm font-mono"
                     style={{ borderColor, backgroundColor: row.bgLight, color: textOnColor(row.bgLight) }}
                     title={row.bgLight}
                   >
                     {row.bgLight.toUpperCase()}
                   </td>
                   <td
-                    className="px-2 py-2 border-r text-center text-[10px] font-mono"
+                    className="px-2 py-2 border-r text-center text-sm font-mono"
                     style={{ borderColor, backgroundColor: row.bgDark, color: textOnColor(row.bgDark) }}
                     title={row.bgDark}
                   >
                     {row.bgDark.toUpperCase()}
                   </td>
                   <td
-                    className="px-2 py-2 border-r text-center text-[10px] font-mono"
+                    className="px-2 py-2 border-r text-center text-sm font-mono"
                     style={{ borderColor, backgroundColor: row.accLight, color: textOnColor(row.accLight) }}
                     title={row.accLight}
                   >
                     {row.accLight.toUpperCase()}
                   </td>
                   <td
-                    className="px-2 py-2 text-center text-[10px] font-mono"
+                    className="px-2 py-2 text-center text-sm font-mono"
                     style={{ borderColor, backgroundColor: row.accDark, color: textOnColor(row.accDark) }}
                     title={row.accDark}
                   >

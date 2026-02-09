@@ -10,10 +10,14 @@ import { PassageDemo } from "@/components/PassageDemo"
 import { AccentColors } from "@/components/AccentColors"
 import { BackgroundColors } from "@/components/BackgroundColors"
 import { FinalColors } from "@/components/FinalColors"
+import { ColorSelector } from "@/components/ColorSelector"
+import { AccentColorSelector } from "@/components/AccentColorSelector"
+import { TextColorSelector } from "@/components/TextColorSelector"
+import { BgSimpleSelector } from "@/components/BgSimpleSelector"
 import { type Theme, baseBackgrounds } from "@/lib/utils"
 import "./index.css"
 
-type Tab = "final" | "table" | "background" | "passage" | "accent"
+type Tab = "final" | "selector" | "accentSelector" | "textSelector" | "bgSimpleSelector" | "table" | "background" | "passage" | "accent"
 
 function App() {
   const [theme, setTheme] = useState<Theme>(() => {
@@ -23,7 +27,7 @@ function App() {
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const saved = localStorage.getItem("activeTab") as Tab
-    const validTabs: Tab[] = ["final", "table", "background", "accent", "passage"]
+    const validTabs: Tab[] = ["final", "selector", "accentSelector", "textSelector", "bgSimpleSelector", "table", "background", "accent", "passage"]
     return validTabs.includes(saved) ? saved : "table"
   })
 
@@ -259,6 +263,58 @@ function App() {
               Final Colors
             </button>
             <button
+              onClick={() => setActiveTab("selector")}
+              className="px-4 py-2 font-medium transition-colors"
+              style={{
+                color: activeTab === "selector" 
+                  ? (theme === "dark" ? "#E4E4E7" : "#262626")
+                  : (theme === "dark" ? "#A1A1AA" : "#71717a"),
+                borderBottom: activeTab === "selector" ? "2px solid" : "none",
+                borderColor: activeTab === "selector" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
+              }}
+            >
+              Selector (advanced)
+            </button>
+            <button
+              onClick={() => setActiveTab("accentSelector")}
+              className="px-4 py-2 font-medium transition-colors"
+              style={{
+                color: activeTab === "accentSelector" 
+                  ? (theme === "dark" ? "#E4E4E7" : "#262626")
+                  : (theme === "dark" ? "#A1A1AA" : "#71717a"),
+                borderBottom: activeTab === "accentSelector" ? "2px solid" : "none",
+                borderColor: activeTab === "accentSelector" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
+              }}
+            >
+              Selector (Accent)
+            </button>
+            <button
+              onClick={() => setActiveTab("textSelector")}
+              className="px-4 py-2 font-medium transition-colors"
+              style={{
+                color: activeTab === "textSelector" 
+                  ? (theme === "dark" ? "#E4E4E7" : "#262626")
+                  : (theme === "dark" ? "#A1A1AA" : "#71717a"),
+                borderBottom: activeTab === "textSelector" ? "2px solid" : "none",
+                borderColor: activeTab === "textSelector" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
+              }}
+            >
+              Selector (text color)
+            </button>
+            <button
+              onClick={() => setActiveTab("bgSimpleSelector")}
+              className="px-4 py-2 font-medium transition-colors"
+              style={{
+                color: activeTab === "bgSimpleSelector" 
+                  ? (theme === "dark" ? "#E4E4E7" : "#262626")
+                  : (theme === "dark" ? "#A1A1AA" : "#71717a"),
+                borderBottom: activeTab === "bgSimpleSelector" ? "2px solid" : "none",
+                borderColor: activeTab === "bgSimpleSelector" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
+              }}
+            >
+              Selector (BG color)
+            </button>
+            <button
               onClick={() => setActiveTab("table")}
               className="px-4 py-2 font-medium transition-colors"
               style={{
@@ -317,6 +373,22 @@ function App() {
       {/* Tab content */}
       {activeTab === "final" && (
         <FinalColors theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+      )}
+
+      {activeTab === "selector" && (
+        <ColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+      )}
+
+      {activeTab === "accentSelector" && (
+        <AccentColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+      )}
+
+      {activeTab === "textSelector" && (
+        <TextColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+      )}
+
+      {activeTab === "bgSimpleSelector" && (
+        <BgSimpleSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
       )}
 
       {activeTab === "table" && (

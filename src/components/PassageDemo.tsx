@@ -4,6 +4,7 @@ import { getAllTailwind700Colors, getAllTailwind800Colors, getAllTailwind200Colo
 import { baseBackgrounds, type Theme, reduceSaturation as reduceSaturationFn } from "@/lib/utils"
 import { applyRadixLightOverride } from "@/lib/radix-light-overrides"
 import { type ColorSystem } from "@/components/ColorSystemSelector"
+import { DemoCard } from "@/components/DemoCard"
 import "./PassageDemo.css"
 
 interface PassageDemoProps {
@@ -323,38 +324,28 @@ export function PassageDemo({ theme, colorSystem, reduceSaturation, radixLightOv
         </p>
 
         {/* Light background container (Radix light, adjusted toggle applied) */}
-        <div
-          className="mt-6 p-4 rounded-xl border"
-          style={{
-            backgroundColor: lightDemoBg,
-            borderColor: theme === "dark" ? "#3f3f46" : "#EBEBEB"
-          }}
+        <DemoCard
+          backgroundColor={lightDemoBg}
+          headingColor={lightHeadingColor}
+          title="Light Colored Container"
+          theme={theme}
+          className="mt-6"
         >
-          <h4 style={{ color: lightHeadingColor, marginBottom: "8px", marginTop: 0 }}>
-            Light Colored Container
-          </h4>
-          <p style={{ color: "#262626", margin: 0 }}>
-            This block uses the light Radix accent background (level {selectedLevel}) with optional adjustment.
-            Heading keeps the accent text color; body uses standard dark text for readability.
-          </p>
-        </div>
+          This block uses the light Radix accent background (level {selectedLevel}) with optional adjustment.
+          Heading keeps the accent text color; body uses standard dark text for readability.
+        </DemoCard>
 
         {/* Dark background container (Radix dark rendered in light/beige theme) */}
-        <div
-          className="mt-4 p-4 rounded-xl border"
-          style={{
-            backgroundColor: darkDemoBg,
-            borderColor: theme === "dark" ? "#3f3f46" : "#EBEBEB"
-          }}
+        <DemoCard
+          backgroundColor={darkDemoBg}
+          headingColor={darkHeadingColor}
+          title="Dark Colored Container"
+          theme={theme}
+          className="mt-4"
         >
-          <h4 style={{ color: darkHeadingColor, marginBottom: "8px", marginTop: 0 }}>
-            Dark Colored Container
-          </h4>
-          <p style={{ color: "#EBEBEB", margin: 0 }}>
-            This block shows the dark Radix accent background (level {selectedLevel}) inside the light/beige page.
-            Heading keeps the accent text color; body uses light text for contrast.
-          </p>
-        </div>
+          This block shows the dark Radix accent background (level {selectedLevel}) inside the light/beige page.
+          Heading keeps the accent text color; body uses light text for contrast.
+        </DemoCard>
 
         <h4 style={{ color: passageTextColor }}>
           Best Practices for Implementation
