@@ -36,17 +36,19 @@ export function TextColorSelector({
     [colorSystem, reduceSaturation, radixLightOverrides]
   )
 
-  const textSwatches: TextSwatch[] = useMemo(() => {
+  const textSwatchesLight: TextSwatch[] = useMemo(() => {
     const textRows = rows.filter((r) => !TEXT_SELECTOR_EXCLUDE_NAMES.includes(r.name))
-    const isLightOrBeige = theme === "light" || theme === "beige"
-    const defaultSwatch: TextSwatch = isLightOrBeige
-      ? { name: "Default black", value: "#262626" }
-      : { name: "Default white", value: "#EBEBEB" }
-    const palette = isLightOrBeige
-      ? textRows.map((r) => ({ name: r.name, value: r.textLight }))
-      : textRows.map((r) => ({ name: r.name, value: r.textDark }))
+    const defaultSwatch: TextSwatch = { name: "Default black", value: "#262626" }
+    const palette = textRows.map((r) => ({ name: r.name, value: r.textLight }))
     return [defaultSwatch, ...palette]
-  }, [theme, rows])
+  }, [rows])
+
+  const textSwatchesDark: TextSwatch[] = useMemo(() => {
+    const textRows = rows.filter((r) => !TEXT_SELECTOR_EXCLUDE_NAMES.includes(r.name))
+    const defaultSwatch: TextSwatch = { name: "Default white", value: "#EBEBEB" }
+    const palette = textRows.map((r) => ({ name: r.name, value: r.textDark }))
+    return [defaultSwatch, ...palette]
+  }, [rows])
 
   const [selectedText, setSelectedText] = useState<TextSwatch | null>(null)
 
@@ -76,48 +78,61 @@ export function TextColorSelector({
   const isSelected = (s: TextSwatch) =>
     selectedText && selectedText.name === s.name && selectedText.value === s.value
 
-  const defaultSwatch: TextSwatch =
-    theme === "light" || theme === "beige"
-      ? { name: "Default black", value: "#262626" }
-      : { name: "Default white", value: "#EBEBEB" }
+  const defaultForLight = textSwatchesLight[0]
+  const defaultForDark = textSwatchesDark[0]
+
+  const displayTextColor =
+    theme === "dark"
+      ? selectedText
+        ? (textSwatchesDark.find((s) => s.name === selectedText.name)?.value ?? defaultForDark.value)
+        : defaultTextColor
+      : (selectedText?.value ?? defaultTextColor)
 
   return (
     <div className="p-4 flex flex-col lg:flex-row gap-6">
       <aside
-        className="flex-shrink-0 w-full lg:w-[300px] p-4 rounded-lg border"
+        className="flex-shrink-0 w-full lg:w-[300px] space-y-6 p-4 rounded-lg border"
         style={{ borderColor, backgroundColor: theme === "dark" ? "#18181b" : "#fafafa" }}
       >
         <div>
           <h3 className="text-sm font-semibold mb-2" style={{ color: headerFg }}>
             Text color
           </h3>
-          <div className="flex flex-wrap gap-1">
-            {textSwatches.map((s) => {
-              const selected = isSelected(s)
-              return (
-                <button
-                  key={s.name + s.value}
-                  onClick={() => {
-                    if (selected) {
-                      setSelectedText(defaultSwatch)
-                    } else {
-                      setSelectedText(s)
-                    }
-                  }}
-                  className="rounded transition-all hover:scale-105"
-                  style={{
-                    width: SWATCH_SIZE,
-                    height: SWATCH_SIZE,
-                    backgroundColor: s.value,
-                    border: `1px solid ${SWATCH_BORDER}`,
-                    outline: selected ? `${SELECTED_BORDER_WIDTH}px solid ${SELECTED_BORDER_COLOR}` : "none",
-                    outlineOffset: 2,
-                  }}
-                  title={s.name}
-                />
-              )
-            })}
-          </div>
+          {(["light", "dark"] as const).map((themeVariant) => (
+            <div key={themeVariant} className="mb-3">
+              <p className="text-xs font-medium mb-1.5" style={{ color: subFg }}>
+                {themeVariant === "light" ? "On light background" : "On dark background"}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {(themeVariant === "light" ? textSwatchesLight : textSwatchesDark).map((s) => {
+                  const selected = isSelected(s)
+                  const defaultForSection = themeVariant === "light" ? defaultForLight : defaultForDark
+                  return (
+                    <button
+                      key={s.name + s.value}
+                      onClick={() => {
+                        if (selected) {
+                          setSelectedText(defaultForSection)
+                        } else {
+                          setSelectedText(s)
+                        }
+                      }}
+                      className="rounded transition-all hover:scale-105"
+                      style={{
+                        width: SWATCH_SIZE,
+                        height: SWATCH_SIZE,
+                        backgroundColor: s.value,
+                        border: `1px solid ${SWATCH_BORDER}`,
+                        outline: selected ? `${SELECTED_BORDER_WIDTH}px solid ${SELECTED_BORDER_COLOR}` : "none",
+                        outlineOffset: 2,
+                      }}
+                      title={s.name}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </aside>
 
@@ -132,7 +147,7 @@ export function TextColorSelector({
           <h4
             className="m-0 font-bold leading-tight"
             style={{
-              color: selectedText?.value ?? defaultTextColor,
+              color: displayTextColor,
               fontSize: "36px",
               lineHeight: 1.1,
               fontFamily: "Calibri, sans-serif",

@@ -104,6 +104,18 @@ export function lightnessToGrayscaleHex(lightness: number): string {
   return rgbToHex(gray, gray, gray)
 }
 
+/**
+ * Body/paragraph text color for content inside a container with a background color.
+ * Global rule: dark container background uses pure white (#FFFFFF) for p text; light background uses dark text (#262626).
+ * Transparent container uses theme default (EBEBEB for dark theme, 262626 for light).
+ */
+export function bodyTextColorForContainerBackground(backgroundColor: string, theme: Theme): string {
+  if (backgroundColor === "transparent") {
+    return theme === "dark" ? "#EBEBEB" : "#262626"
+  }
+  return getGrayscaleLightness(backgroundColor) > 50 ? "#262626" : "#FFFFFF"
+}
+
 // Calculate saturation (0-100) from hex color
 // Uses the formula: saturation = (max - min) / max
 export function getSaturation(hex: string): number {

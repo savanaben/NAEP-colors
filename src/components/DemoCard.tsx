@@ -1,6 +1,5 @@
 import { type ReactNode } from "react"
-import { getGrayscaleLightness } from "@/lib/utils"
-import { type Theme } from "@/lib/utils"
+import { bodyTextColorForContainerBackground, type Theme } from "@/lib/utils"
 
 export interface DemoCardProps {
   /** Background color of the card */
@@ -16,13 +15,6 @@ export interface DemoCardProps {
   className?: string
 }
 
-function bodyColorForBackground(backgroundColor: string, theme: Theme): string {
-  if (backgroundColor === "transparent") {
-    return theme === "dark" ? "#EBEBEB" : "#262626"
-  }
-  return getGrayscaleLightness(backgroundColor) > 50 ? "#262626" : "#EBEBEB"
-}
-
 export function DemoCard({
   backgroundColor,
   headingColor,
@@ -32,7 +24,7 @@ export function DemoCard({
   className = "",
 }: DemoCardProps) {
   const borderColor = theme === "dark" ? "#3f3f46" : "#EBEBEB"
-  const bodyColor = bodyColorForBackground(backgroundColor, theme)
+  const bodyColor = bodyTextColorForContainerBackground(backgroundColor, theme)
 
   return (
     <div

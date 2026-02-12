@@ -17,7 +17,7 @@ import { BgSimpleSelector } from "@/components/BgSimpleSelector"
 import { type Theme, baseBackgrounds } from "@/lib/utils"
 import "./index.css"
 
-type Tab = "final" | "selector" | "accentSelector" | "textSelector" | "bgSimpleSelector" | "table" | "background" | "passage" | "accent"
+type Tab = "final" | "selector" | "table" | "background" | "passage" | "accent"
 
 function App() {
   const [theme, setTheme] = useState<Theme>(() => {
@@ -26,9 +26,11 @@ function App() {
   })
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
-    const saved = localStorage.getItem("activeTab") as Tab
-    const validTabs: Tab[] = ["final", "selector", "accentSelector", "textSelector", "bgSimpleSelector", "table", "background", "accent", "passage"]
-    return validTabs.includes(saved) ? saved : "table"
+    const saved = localStorage.getItem("activeTab")
+    const combinedSelectorTabs = ["accentSelector", "textSelector", "bgSimpleSelector"]
+    const resolved = combinedSelectorTabs.includes(saved ?? "") ? "selector" : saved
+    const validTabs: Tab[] = ["final", "selector", "table", "background", "accent", "passage"]
+    return validTabs.includes(resolved as Tab) ? (resolved as Tab) : "final"
   })
 
   const [colorSystem, setColorSystem] = useState<ColorSystem>(() => {
@@ -273,46 +275,7 @@ function App() {
                 borderColor: activeTab === "selector" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
               }}
             >
-              Selector (advanced)
-            </button>
-            <button
-              onClick={() => setActiveTab("accentSelector")}
-              className="px-4 py-2 font-medium transition-colors"
-              style={{
-                color: activeTab === "accentSelector" 
-                  ? (theme === "dark" ? "#E4E4E7" : "#262626")
-                  : (theme === "dark" ? "#A1A1AA" : "#71717a"),
-                borderBottom: activeTab === "accentSelector" ? "2px solid" : "none",
-                borderColor: activeTab === "accentSelector" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
-              }}
-            >
-              Selector (Accent)
-            </button>
-            <button
-              onClick={() => setActiveTab("textSelector")}
-              className="px-4 py-2 font-medium transition-colors"
-              style={{
-                color: activeTab === "textSelector" 
-                  ? (theme === "dark" ? "#E4E4E7" : "#262626")
-                  : (theme === "dark" ? "#A1A1AA" : "#71717a"),
-                borderBottom: activeTab === "textSelector" ? "2px solid" : "none",
-                borderColor: activeTab === "textSelector" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
-              }}
-            >
-              Selector (text color)
-            </button>
-            <button
-              onClick={() => setActiveTab("bgSimpleSelector")}
-              className="px-4 py-2 font-medium transition-colors"
-              style={{
-                color: activeTab === "bgSimpleSelector" 
-                  ? (theme === "dark" ? "#E4E4E7" : "#262626")
-                  : (theme === "dark" ? "#A1A1AA" : "#71717a"),
-                borderBottom: activeTab === "bgSimpleSelector" ? "2px solid" : "none",
-                borderColor: activeTab === "bgSimpleSelector" ? (theme === "dark" ? "#E4E4E7" : "#262626") : "transparent"
-              }}
-            >
-              Selector (BG color)
+              Selectors
             </button>
             <button
               onClick={() => setActiveTab("table")}
@@ -376,19 +339,32 @@ function App() {
       )}
 
       {activeTab === "selector" && (
-        <ColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
-      )}
-
-      {activeTab === "accentSelector" && (
-        <AccentColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
-      )}
-
-      {activeTab === "textSelector" && (
-        <TextColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
-      )}
-
-      {activeTab === "bgSimpleSelector" && (
-        <BgSimpleSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+        <div className="p-4 space-y-10">
+          <section>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: theme === "dark" ? "#E4E4E7" : "#262626" }}>
+              Selector (Accent)
+            </h2>
+            <AccentColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: theme === "dark" ? "#E4E4E7" : "#262626" }}>
+              Selector (text color)
+            </h2>
+            <TextColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: theme === "dark" ? "#E4E4E7" : "#262626" }}>
+              Selector (BG color)
+            </h2>
+            <BgSimpleSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+          </section>
+          <section>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: theme === "dark" ? "#E4E4E7" : "#262626" }}>
+              Selector (advanced)
+            </h2>
+            <ColorSelector theme={theme} colorSystem={colorSystem} reduceSaturation={reduceSaturation} radixLightOverrides={radixLightOverrides} />
+          </section>
+        </div>
       )}
 
       {activeTab === "table" && (

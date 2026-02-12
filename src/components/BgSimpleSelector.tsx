@@ -77,10 +77,19 @@ export function BgSimpleSelector({
   const isSelected = (s: BgSwatch) =>
     selectedBg && selectedBg.name === s.name && selectedBg.value === s.value
 
-  const defaultSwatch: BgSwatch =
-    theme === "dark" ? { name: "Black", value: "#000000" } : { name: "White", value: "#FFFFFF" }
+  const defaultSwatchLight = bgSwatchesLight.find((s) => s.name === "White") ?? bgSwatchesLight[1]
+  const defaultSwatchDark = bgSwatchesDark.find((s) => s.name === "Black") ?? bgSwatchesDark[1]
 
-  const cardBg = selectedBg?.value ?? defaultBg
+  const displayBg =
+    theme === "dark" && selectedBg
+      ? selectedBg.name === "Transparent"
+        ? "transparent"
+        : selectedBg.name === "White"
+          ? "#000000"
+          : selectedBg.name === "Black" || selectedBg.name.endsWith(" (dark)")
+            ? selectedBg.value
+            : (rows.find((r) => r.name === selectedBg.name)?.bgDark ?? selectedBg.value)
+      : (selectedBg?.value ?? defaultBg)
 
   return (
     <div className="p-4 flex flex-col lg:flex-row gap-6">
@@ -92,24 +101,22 @@ export function BgSimpleSelector({
           <h3 className="text-sm font-semibold mb-2" style={{ color: headerFg }}>
             Background color
           </h3>
-          <p className="text-xs mb-2" style={{ color: subFg }}>
-            Light and dark theme swatches. Preview uses default title and body text.
-          </p>
           <BackgroundColorRulesAccordion theme={theme} />
           {(["light", "dark"] as const).map((themeVariant) => (
             <div key={themeVariant} className="mb-3">
               <p className="text-xs font-medium mb-1.5" style={{ color: subFg }}>
-                {themeVariant === "light" ? "Light/Beige Theme" : "Dark theme"}
+                {themeVariant === "light" ? "Light background" : "Dark background"}
               </p>
               <div className="flex flex-wrap gap-1">
                 {(themeVariant === "light" ? bgSwatchesLight : bgSwatchesDark).map((s) => {
                   const selected = isSelected(s)
+                  const defaultForSection = themeVariant === "light" ? defaultSwatchLight : defaultSwatchDark
                   return (
                     <button
                       key={s.name + s.value}
                       onClick={() => {
                         if (selected) {
-                          setSelectedBg(defaultSwatch)
+                          setSelectedBg(defaultForSection)
                         } else {
                           setSelectedBg(s)
                         }
@@ -157,7 +164,7 @@ export function BgSimpleSelector({
         <div
           className="p-4 rounded-xl border max-w-xl font-semibold"
           style={{
-            backgroundColor: cardBg,
+            backgroundColor: displayBg,
             borderColor: theme === "dark" ? "#3f3f46" : "#EBEBEB",
             fontFamily: "Calibri, sans-serif",
           }}

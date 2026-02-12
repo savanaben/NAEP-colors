@@ -87,11 +87,6 @@ export function ColorSelector({
     return [TRANSPARENT_BG_SWATCH, black, ...darkPalette]
   }, [rows])
 
-  const bgSectionsToShow: ("light" | "dark")[] = useMemo(() => {
-    if (!selectedText) return ["light", "dark"]
-    return [selectedText.theme]
-  }, [selectedText])
-
   useEffect(() => {
     if (!selectedText || !selectedBg) return
     if (selectedBg.name === "Transparent") return
@@ -124,6 +119,21 @@ export function ColorSelector({
   const isSelectedBg = (s: SwatchItem) =>
     selectedBg && selectedBg.name === s.name && selectedBg.theme === s.theme
 
+  const displayHeadingColor =
+    theme === "dark"
+      ? selectedText
+        ? (textSwatches.find((s) => s.name === selectedText.name && s.theme === "dark")?.value ?? "#EBEBEB")
+        : "#E4E4E7"
+      : (selectedText?.value ?? "#262626")
+  const displayBgValue =
+    theme === "dark" && selectedBg
+      ? selectedBg.name === "White"
+        ? "#000000"
+        : selectedBg.name === "Transparent"
+          ? "transparent"
+          : (bgSwatchesDark.find((s) => s.name === selectedBg.name)?.value ?? selectedBg.value)
+      : (selectedBg?.value ?? (theme === "dark" ? "#27272a" : "#ffffff"))
+
   return (
     <div className="p-4 flex flex-col lg:flex-row gap-6">
       {/* Sidebar ~300px: two sets of swatches */}
@@ -138,7 +148,7 @@ export function ColorSelector({
           {(["light", "dark"] as const).map((themeVariant) => (
             <div key={themeVariant} className="mb-3">
               <p className="text-xs font-medium mb-1.5" style={{ color: subFg }}>
-                {themeVariant === "light" ? "Light/Beige Theme" : "Dark theme"}
+                {themeVariant === "light" ? "On light background" : "On dark background"}
               </p>
               <div className="flex flex-wrap gap-1">
                 {textSwatches
@@ -188,10 +198,10 @@ export function ColorSelector({
             Background color
           </h3>
           <BackgroundColorRulesAccordion theme={theme} />
-          {bgSectionsToShow.map((themeVariant) => (
+          {(["light", "dark"] as const).map((themeVariant) => (
             <div key={themeVariant} className="mb-3">
               <p className="text-xs font-medium mb-1.5" style={{ color: subFg }}>
-                {themeVariant === "light" ? "Light/Beige Theme" : "Dark theme"}
+                {themeVariant === "light" ? "Light background" : "Dark background"}
               </p>
               <div className="flex flex-wrap gap-1">
                 {(themeVariant === "light" ? bgSwatchesLight : bgSwatchesDark).map((s) => {
@@ -255,8 +265,8 @@ export function ColorSelector({
         </h3>
         <div className="max-w-xl">
           <DemoCard
-            backgroundColor={selectedBg?.value ?? (theme === "dark" ? "#27272a" : "#ffffff")}
-            headingColor={selectedText?.value ?? (theme === "dark" ? "#E4E4E7" : "#262626")}
+            backgroundColor={displayBgValue}
+            headingColor={displayHeadingColor}
             title="Sample card"
             theme={theme}
           >

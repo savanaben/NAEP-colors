@@ -26,7 +26,13 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation, radixLi
     []
   )
 
-  // Primary default text swatch: black (light/beige) or white (dark), first in the list
+  // Pure black (light/beige) or pure white (dark), first in the list
+  const pureBlackWhiteSwatch = useMemo(() => ({
+    name: "Pure Black/Pure White",
+    value: theme === "dark" ? "#FFFFFF" : "#000000"
+  }), [theme])
+
+  // Primary default text swatch: black (light/beige) or white (dark)
   const defaultTextSwatch = useMemo(() => ({
     name: theme === "dark" ? "White" : "Black",
     value: theme === "dark" ? "#EBEBEB" : "#262626"
@@ -40,8 +46,8 @@ export function BackgroundColors({ theme, colorSystem, reduceSaturation, radixLi
           const value = applyRadixLightOverride(raw, theme, colorSystem, radixLightOverrides)
           return { name: c.name, value }
         })
-    return [defaultTextSwatch, ...palette]
-  }, [theme, colorSystem, radixLightOverrides, defaultTextSwatch, radix11Colors, radix5LightColors])
+    return [pureBlackWhiteSwatch, defaultTextSwatch, ...palette]
+  }, [theme, colorSystem, radixLightOverrides, pureBlackWhiteSwatch, defaultTextSwatch, radix11Colors, radix5LightColors])
 
   const defaultTextColor = useMemo(() => {
     const gray = swatchColors.find(c => c.name === "Gray")

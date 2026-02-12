@@ -2,7 +2,6 @@ import { useMemo, useState } from "react"
 import { getFinalColorRows } from "@/lib/final-colors-data"
 import { type Theme, baseBackgrounds } from "@/lib/utils"
 import { type ColorSystem } from "@/components/ColorSystemSelector"
-import { BackgroundColorRulesAccordion } from "@/components/BackgroundColorRulesAccordion"
 
 interface AccentSwatch {
   name: string
@@ -71,8 +70,12 @@ export function AccentColorSelector({
     )
   }
 
-  const isSelected = (s: AccentSwatch) =>
-    selectedBg && selectedBg.name === s.name && selectedBg.value === s.value
+  const isSelected = (s: AccentSwatch) => selectedBg !== null && s.name === selectedBg.name
+
+  const displayAccentValue =
+    selectedBg != null
+      ? (accentSwatches.find((s) => s.name === selectedBg.name)?.value ?? defaultBg)
+      : defaultBg
 
   return (
     <div className="p-4 flex flex-col lg:flex-row gap-6">
@@ -85,9 +88,9 @@ export function AccentColorSelector({
             Background color (accent)
           </h3>
           <p className="text-xs mb-2" style={{ color: subFg }}>
-            Accent colors are often used for colored sidebars.
+            Text should never overlay an accent color.
           </p>
-          <BackgroundColorRulesAccordion theme={theme} />
+    
           <div className="flex flex-wrap gap-1">
             {accentSwatches.map((s) => {
               const selected = isSelected(s)
@@ -147,7 +150,7 @@ export function AccentColorSelector({
         >
           <div
             className="flex-[2] min-w-0"
-            style={{ backgroundColor: selectedBg?.value ?? defaultBg }}
+            style={{ backgroundColor: displayAccentValue }}
           />
           <div
             className="flex-[4] min-w-0"
@@ -155,7 +158,7 @@ export function AccentColorSelector({
           />
           <div
             className="flex-[2] min-w-0"
-            style={{ backgroundColor: selectedBg?.value ?? defaultBg }}
+            style={{ backgroundColor: displayAccentValue }}
           />
         </div>
       </div>

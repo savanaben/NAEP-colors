@@ -15,7 +15,6 @@ const LINK_BLUE_HOVER = "#2563eb"
 export function BackgroundColorRulesAccordion({ theme, className = "" }: BackgroundColorRulesAccordionProps) {
   const [open, setOpen] = useState(false)
   const borderColor = theme === "dark" ? BORDER_DARK : BORDER
-  const headerFg = theme === "dark" ? "#E4E4E7" : "#262626"
   const subFg = theme === "dark" ? "#A1A1AA" : "#71717a"
 
   return (
